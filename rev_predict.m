@@ -30,12 +30,12 @@
 
 %% boosting/bagging
 % 
-Indices = crossvalind('Kfold', length(big_idx_wo_outliers), 5);
-full = 1:length(big_idx_wo_outliers);
+Indices = crossvalind('Kfold', length(nonoutliers), 3);
+full = 1:length(nonoutliers);
 
 
-new_tmp_all = Big_train(big_idx_wo_outliers,:);
-new_Revenue = Big_rev(big_idx_wo_outliers);
+new_tmp_all = full_train(nonoutliers,2:end);
+new_Revenue = Revenue(nonoutliers);
 
 % 
 % Indices = crossvalind('Kfold', length(nonoutliers)-1, 5);
@@ -47,12 +47,12 @@ new_Revenue = Big_rev(big_idx_wo_outliers);
 
 
 
-std_mat = zeros(3,6);
-num_of_trees = [10,50,100,200,400,50];
+std_mat = zeros(1,5);
+num_of_trees = [100,200,300,400,500];
 % num_of_trees = [50,100,200,300,400,500,600,700,800];
-learn_rates = [0.01,0.1,0.15];
+% learn_rates = [0.01,0.1,0.2];
 % learn_rates = [0.01,0.1,0.2,0.4,0.8,1];
-% learn_rates = 1;
+learn_rates = 0.1;
 
 
 for  lr = 1:length(learn_rates)
@@ -61,16 +61,18 @@ for  lr = 1:length(learn_rates)
         
         error = zeros(1,3);
         
-        for i = 1:5
+        for i = 1:3
             test_idx = find(Indices==i);
             train_idx = setdiff(full,test_idx);
             test = new_tmp_all(test_idx,:);
             train = new_tmp_all(train_idx,:);
             testrev = new_Revenue(test_idx,:);
             trainrev = new_Revenue(train_idx,:);
-            predictor = fitensemble(train, trainrev, 'LSBoost',num_of_trees(nt), 'Tree', 'Type', 'Regression','CategoricalPredictors',[1,2,3,cate],'LearnRate',learn_rates(lr));
-%              predictor = fitensemble(train, trainrev, 'Bag',num_of_trees(nt), 'Tree', 'Type', 'Regression','CategoricalPredictors',[1,2,3,cate]);
+%             predictor = fitensemble(train, trainrev, 'LSBoost',num_of_trees(nt), 'Tree', 'Type', 'Regression','CategoricalPredictors',[1,2,3],'LearnRate',learn_rates(lr));
+            predictor = fitensemble(train, trainrev, 'LSBoost',num_of_trees(nt), 'Tree', 'Type', 'Regression','CategoricalPredictors',2,'Resample','on','LearnRate',0.1);
+%              predictor = fitensemble(train, trainrev, 'Bag',num_of_trees(nt), 'Tree', 'Type', 'Regression','CategoricalPredictors',1);
             output = predict(predictor,test);
+                    display(i)
             error(i) = mse(output-testrev);
         end
         
